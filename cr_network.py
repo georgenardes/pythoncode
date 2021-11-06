@@ -1,12 +1,31 @@
 import tensorflow as tf
 import data_handler
 import weight_to_mif
-
+import cv2 as cv
+import numpy as np
 
 print("Loading qmodel")
 interpret = tf.lite.Interpreter(model_path="qmodel.tflite")
 print("Allocating tensors")
 interpret.allocate_tensors()
+
+# indices da entrada e saida
+input_index = interpret.get_input_details()[0]["index"]
+
+# Run predictions on every image in the "test" dataset.
+test_image = cv.imread("C:\\Users\\User\\Desktop\\projeto_tcc\\ccode\\test_images\\Y_74978.png")
+print(test_image.shape)
+test_image = np.expand_dims(test_image, axis=0).astype(np.float32)
+interpret.set_tensor(input_index, test_image)
+
+# Run inference.
+interpret.invoke()
+
+# salva saida como imagem
+data_handler.save_img_channels("conv1", interpret.tensor(12)())
+data_handler.save_img_channels("pool1", interpret.tensor(13)())
+data_handler.save_img_channels("conv2", interpret.tensor(14)())
+
 
 """
 Salva pesos em TXT para carregar no projeto em C
@@ -16,7 +35,7 @@ data_handler.save_weights_q(interpret)
 # mostra fluxo de operações do interpreter do TFLite
 for opdet in interpret._get_ops_details():
     print(opdet)
-
+    
 """
 Salva os pesos em arquivo .mif para carregar nas memória do projeto em VHDL
 """
@@ -51,3 +70,7 @@ scale_pesos = interpret.get_tensor_details()[2]['quantization_parameters']['scal
 scale_saida = interpret.get_tensor_details()[18]['quantization_parameters']['scales']
 scale_tensor = (scale_entrada * scale_pesos)/scale_saida
 weight_to_mif.bias_scale_to_mif(interpret.tensor(7)(), scale_tensor, "memory_files/conv4_bias.mif", 32, 128)
+
+
+
+

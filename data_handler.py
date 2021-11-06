@@ -3,7 +3,7 @@ Funções para carregar e salvar dados
 """
 
 import tensorflow as tf
-from tensorflow import keras
+import cv2 as cv
 
 
 def load_data (path):
@@ -148,5 +148,8 @@ def save_weights_q(model):
         zeros = interpreter.get_tensor_details()[21]['quantization_parameters']['zero_points'][0]
         f.write(str(zeros) + ";")
 
-
-
+def save_img_channels (path, img):
+    for c in range(img.shape[3]):
+        img_channel = img[0, ..., c] + 128
+        cv.imwrite(path+"channel_"+str(c)+".png", img_channel)
+        cv.waitKey(0)
